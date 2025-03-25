@@ -15,6 +15,11 @@ import AdminDashboard from "./pages/AdminDashboard";
 import GameListing from "./pages/GameListing";
 import GameDetail from "./pages/GameDetail";
 import Wallet from "./pages/Wallet";
+import UserProfile from "./pages/UserProfile";
+import AdminUsers from "./pages/AdminUsers";
+import GameResults from "./pages/GameResults";
+import Notifications from "./pages/Notifications";
+import Transactions from "./pages/Transactions";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -34,9 +39,14 @@ const App = () => {
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/transactions" element={<Transactions />} />
               <Route path="/games" element={<GameListing />} />
               <Route path="/games/:slug" element={<GameDetail />} />
+              <Route path="/game-results" element={<GameResults />} />
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/profile" element={<UserProfile />} />
+              <Route path="/notifications" element={<Notifications />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
