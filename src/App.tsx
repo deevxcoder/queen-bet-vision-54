@@ -12,6 +12,7 @@ import SignUp from "./pages/SignUp";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminGames from "./pages/AdminGames";
 import GameListing from "./pages/GameListing";
 import GameDetail from "./pages/GameDetail";
 import Wallet from "./pages/Wallet";
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/games" element={<AdminGames />} />
               <Route path="/admin/transactions" element={<Transactions />} />
               <Route path="/games" element={<GameListing />} />
               <Route path="/games/:slug" element={<GameDetail />} />

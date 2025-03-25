@@ -6,13 +6,16 @@ import './index.css';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { NotificationProvider } from './contexts/NotificationContext.tsx';
 import { TransactionProvider } from './contexts/TransactionContext.tsx';
+import { GameProvider } from './contexts/GameContext.tsx';
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AuthProvider>
       <NotificationProvider>
         <TransactionProvider>
-          <App />
+          <GameProvider>
+            <App />
+          </GameProvider>
         </TransactionProvider>
       </NotificationProvider>
     </AuthProvider>
