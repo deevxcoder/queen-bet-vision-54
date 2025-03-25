@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -26,11 +25,6 @@ const TossGameListing: React.FC<TossGameListingProps> = ({ tossGames }) => {
 
   return (
     <div className="mb-12">
-      <div className="mb-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Toss Games</h2>
-        <p className="text-queen-text-secondary">Predict which team will win the toss</p>
-      </div>
-      
       <div className="mb-8">
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-queen-text-secondary" />
