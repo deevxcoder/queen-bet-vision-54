@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Market, GameType, MarketGame, MarketResult, Bet, GameStatus, TossGame } from "@/types/gameTypes";
 import { useToast } from "@/hooks/use-toast";
@@ -586,7 +587,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const createMarket = async (
     market: Omit<Market, "id" | "games" | "previousResults">, 
-    gameTypeIds: string
+    gameTypeIds: string[]
   ): Promise<boolean> => {
     try {
       // Simulate API call
