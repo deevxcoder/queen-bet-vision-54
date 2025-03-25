@@ -10,7 +10,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  ChevronDown 
+  ChevronDown,
+  Trophy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -89,31 +90,48 @@ const Dashboard = () => {
                 </SidebarMenuItem>
                 
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Games">
-                    <Gamepad2 className="h-5 w-5" />
-                    <span>Games</span>
-                  </SidebarMenuButton>
+                  <Link to="/games">
+                    <SidebarMenuButton tooltip="Number Games">
+                      <Gamepad2 className="h-5 w-5" />
+                      <span>Number Games</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Wallet">
-                    <Wallet className="h-5 w-5" />
-                    <span>Wallet</span>
-                  </SidebarMenuButton>
+                  <Link to="/toss-games">
+                    <SidebarMenuButton tooltip="Toss Games">
+                      <Trophy className="h-5 w-5" />
+                      <span>Toss Games</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="History">
-                    <History className="h-5 w-5" />
-                    <span>History</span>
-                  </SidebarMenuButton>
+                  <Link to="/wallet">
+                    <SidebarMenuButton tooltip="Wallet">
+                      <Wallet className="h-5 w-5" />
+                      <span>Wallet</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
                 
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip="Profile">
-                    <UserCircle className="h-5 w-5" />
-                    <span>Profile</span>
-                  </SidebarMenuButton>
+                  <Link to="/game-results">
+                    <SidebarMenuButton tooltip="History">
+                      <History className="h-5 w-5" />
+                      <span>Game History</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+                
+                <SidebarMenuItem>
+                  <Link to="/profile">
+                    <SidebarMenuButton tooltip="Profile">
+                      <UserCircle className="h-5 w-5" />
+                      <span>Profile</span>
+                    </SidebarMenuButton>
+                  </Link>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroup>
@@ -161,7 +179,12 @@ const Dashboard = () => {
                   
                   <Link to="/games" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
                     <Gamepad2 className="h-5 w-5" />
-                    <span>Games</span>
+                    <span>Number Games</span>
+                  </Link>
+                  
+                  <Link to="/toss-games" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
+                    <Trophy className="h-5 w-5" />
+                    <span>Toss Games</span>
                   </Link>
                   
                   <Link to="/wallet" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
@@ -169,9 +192,9 @@ const Dashboard = () => {
                     <span>Wallet</span>
                   </Link>
                   
-                  <Link to="/history" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
+                  <Link to="/game-results" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
                     <History className="h-5 w-5" />
-                    <span>History</span>
+                    <span>Game History</span>
                   </Link>
                   
                   <Link to="/profile" className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-white">
