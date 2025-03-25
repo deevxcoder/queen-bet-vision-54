@@ -8,7 +8,6 @@ import { ArrowLeft, Clock, Trophy } from "lucide-react";
 import { useGame } from "@/contexts/GameContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +32,8 @@ const TossGameDetail = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isPlacingBet, setIsPlacingBet] = useState(false);
+  const [baseAmount, setBaseAmount] = useState(100);
+  const [multiplier, setMultiplier] = useState(1);
 
   // Get the toss game details
   const game = getTossGameById(id || "");
@@ -59,9 +60,14 @@ const TossGameDetail = () => {
     resolver: zodResolver(betFormSchema),
     defaultValues: {
       selectedTeam: undefined,
-      amount: 100,
+      amount: baseAmount * multiplier,
     },
   });
+
+  // Update form amount when base amount or multiplier changes
+  React.useEffect(() => {
+    form.setValue("amount", baseAmount * multiplier);
+  }, [baseAmount, multiplier, form]);
 
   // Function to handle bet submission
   const onSubmit = async (values: BetFormValues) => {
@@ -104,7 +110,9 @@ const TossGameDetail = () => {
           title: "Bet Placed Successfully",
           description: `You bet ₹${values.amount} on ${teamName}`,
         });
-        form.reset();
+        setMultiplier(1);
+        setBaseAmount(100);
+        form.reset({ selectedTeam: values.selectedTeam, amount: 100 });
       }
     } catch (error) {
       toast({
@@ -116,6 +124,12 @@ const TossGameDetail = () => {
       setIsPlacingBet(false);
     }
   };
+
+  // Quick amount buttons
+  const quickAmounts = [50, 100, 500, 1000, 2000];
+  
+  // Multipliers
+  const multipliers = [1, 2, 5, 10, 20, 50, 100];
 
   // Determine status badge color
   const statusColors = {
@@ -241,37 +255,98 @@ const TossGameDetail = () => {
               ) : (
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Team selection */}
+                    {/* Team selection - card style */}
                     <FormField
                       control={form.control}
                       name="selectedTeam"
                       render={({ field }) => (
-                        <FormItem className="space-y-3">
+                        <FormItem className="space-y-4">
                           <FormLabel className="text-white">Select Team</FormLabel>
                           <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="flex flex-col space-y-3"
-                            >
-                              <div className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg cursor-pointer">
-                                <RadioGroupItem value="teamA" id="teamA" />
-                                <FormLabel htmlFor="teamA" className="cursor-pointer font-normal text-white">
-                                  {game.teamA}
-                                </FormLabel>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div
+                                onClick={() => field.onChange("teamA")}
+                                className={`
+                                  cursor-pointer rounded-lg p-4 border-2 transition-all
+                                  ${field.value === "teamA" 
+                                    ? "border-queen-gold bg-queen-gold/20" 
+                                    : "border-white/10 bg-white/5 hover:bg-white/10"}
+                                `}
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="bg-queen-gold/20 rounded-full w-12 h-12 flex items-center justify-center mb-2">
+                                    <Trophy className="w-6 h-6 text-queen-gold" />
+                                  </div>
+                                  <span className="text-white font-medium">{game.teamA}</span>
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2 bg-white/5 hover:bg-white/10 transition-colors p-3 rounded-lg cursor-pointer">
-                                <RadioGroupItem value="teamB" id="teamB" />
-                                <FormLabel htmlFor="teamB" className="cursor-pointer font-normal text-white">
-                                  {game.teamB}
-                                </FormLabel>
+                              
+                              <div
+                                onClick={() => field.onChange("teamB")}
+                                className={`
+                                  cursor-pointer rounded-lg p-4 border-2 transition-all
+                                  ${field.value === "teamB" 
+                                    ? "border-queen-gold bg-queen-gold/20" 
+                                    : "border-white/10 bg-white/5 hover:bg-white/10"}
+                                `}
+                              >
+                                <div className="flex flex-col items-center">
+                                  <div className="bg-queen-gold/20 rounded-full w-12 h-12 flex items-center justify-center mb-2">
+                                    <Trophy className="w-6 h-6 text-queen-gold" />
+                                  </div>
+                                  <span className="text-white font-medium">{game.teamB}</span>
+                                </div>
                               </div>
-                            </RadioGroup>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    {/* Quick amount selection */}
+                    <div className="space-y-3">
+                      <FormLabel className="text-white">Select Amount</FormLabel>
+                      <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                        {quickAmounts.map((amount) => (
+                          <Button
+                            key={amount}
+                            type="button"
+                            variant="outline"
+                            onClick={() => setBaseAmount(amount)}
+                            className={`border-white/10 h-10 ${
+                              baseAmount === amount 
+                                ? "bg-queen-gold/20 border-queen-gold text-white" 
+                                : "bg-white/5 text-white hover:bg-white/10"
+                            }`}
+                          >
+                            ₹{amount}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Multiplier selection */}
+                    <div className="space-y-3">
+                      <FormLabel className="text-white">Select Multiplier</FormLabel>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                        {multipliers.map((multi) => (
+                          <Button
+                            key={multi}
+                            type="button"
+                            variant="outline"
+                            onClick={() => setMultiplier(multi)}
+                            className={`border-white/10 h-10 ${
+                              multiplier === multi 
+                                ? "bg-queen-gold/20 border-queen-gold text-white" 
+                                : "bg-white/5 text-white hover:bg-white/10"
+                            }`}
+                          >
+                            {multi === 1 ? '1x' : `${multi}x`}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
 
                     {/* Bet amount */}
                     <FormField
@@ -313,7 +388,7 @@ const TossGameDetail = () => {
                     <Button 
                       type="submit" 
                       className="w-full bg-queen-gold hover:bg-queen-gold/80 text-white" 
-                      disabled={isPlacingBet || !isAuthenticated}
+                      disabled={isPlacingBet || !isAuthenticated || !form.watch("selectedTeam")}
                     >
                       {isPlacingBet ? "Placing Bet..." : "Place Bet"}
                     </Button>
