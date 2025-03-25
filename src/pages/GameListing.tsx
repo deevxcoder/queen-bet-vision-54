@@ -8,9 +8,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CardMarket from "@/components/ui/CardMarket";
 import { useGame } from "@/contexts/GameContext";
 import { GameStatus } from "@/types/gameTypes";
+import TossGameListing from "@/components/game/TossGameListing";
 
 const GameListing = () => {
-  const { markets } = useGame();
+  const { markets, tossGames } = useGame();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<GameStatus | "all">("all");
   
@@ -32,9 +33,14 @@ const GameListing = () => {
         </div>
         
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Markets</h1>
-          <p className="text-queen-text-secondary">Browse and participate in various markets</p>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Games & Markets</h1>
+          <p className="text-queen-text-secondary">Browse and participate in various games and markets</p>
         </div>
+
+        {/* Show toss games at the top */}
+        {tossGames.length > 0 && (
+          <TossGameListing tossGames={tossGames} />
+        )}
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2">
@@ -57,6 +63,11 @@ const GameListing = () => {
               Filter Markets
             </Button>
           </div>
+        </div>
+        
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Number Games</h2>
+          <p className="text-queen-text-secondary">Browse markets and place bets on number games</p>
         </div>
         
         <Tabs defaultValue="all" className="mb-8" onValueChange={(value) => setStatusFilter(value as GameStatus | "all")}>

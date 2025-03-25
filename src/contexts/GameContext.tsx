@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Market, GameType, MarketGame, MarketResult, Bet, GameStatus } from "@/types/gameTypes";
+import { Market, GameType, MarketGame, MarketResult, Bet, GameStatus, TossGame } from "@/types/gameTypes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "./AuthContext";
 
@@ -16,7 +15,8 @@ const mockGameTypes: GameType[] = [
       "Minimum bet amount is ₹10",
       "Maximum bet amount is ₹10,000"
     ],
-    odds: 90.0
+    odds: 90.0,
+    category: "number"
   },
   {
     id: "gt2",
@@ -28,7 +28,8 @@ const mockGameTypes: GameType[] = [
       "Minimum bet amount is ₹10",
       "Maximum bet amount is ₹5,000"
     ],
-    odds: 9.5
+    odds: 9.5,
+    category: "number"
   },
   {
     id: "gt3",
@@ -40,7 +41,8 @@ const mockGameTypes: GameType[] = [
       "Minimum bet amount is ₹10",
       "Maximum bet amount is ₹7,000"
     ],
-    odds: 9.0
+    odds: 9.0,
+    category: "number"
   },
   {
     id: "gt4",
@@ -52,7 +54,65 @@ const mockGameTypes: GameType[] = [
       "Minimum bet amount is ₹20",
       "Maximum bet amount is ₹15,000"
     ],
-    odds: 1.9
+    odds: 1.9,
+    category: "number"
+  },
+  {
+    id: "gt5",
+    name: "Toss",
+    description: "Predict which team will win the toss",
+    rules: [
+      "Choose either Team A or Team B",
+      "If your chosen team wins the toss, you win",
+      "Minimum bet amount is ₹50",
+      "Maximum bet amount is ₹20,000"
+    ],
+    odds: 1.9,
+    category: "toss"
+  }
+];
+
+// Mock toss games
+const mockTossGames: TossGame[] = [
+  {
+    id: "toss1",
+    marketId: "toss_market",
+    title: "IPL 2023: RCB vs CSK",
+    teamA: "Royal Challengers Bangalore",
+    teamB: "Chennai Super Kings",
+    status: "open",
+    startTime: "Today at 7:30 PM",
+    imageUrl: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+  },
+  {
+    id: "toss2",
+    marketId: "toss_market",
+    title: "IPL 2023: MI vs KKR",
+    teamA: "Mumbai Indians",
+    teamB: "Kolkata Knight Riders",
+    status: "upcoming",
+    startTime: "Tomorrow at 3:30 PM",
+    imageUrl: "https://images.unsplash.com/photo-1531415074968-036ba1b575da?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+  },
+  {
+    id: "toss3",
+    marketId: "toss_market",
+    title: "IPL 2023: SRH vs PBKS",
+    teamA: "Sunrisers Hyderabad",
+    teamB: "Punjab Kings",
+    status: "open",
+    startTime: "Today at 3:30 PM",
+    imageUrl: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+  },
+  {
+    id: "toss4",
+    marketId: "toss_market",
+    title: "IPL 2023: DC vs GT",
+    teamA: "Delhi Capitals",
+    teamB: "Gujarat Titans",
+    status: "closed",
+    startTime: "Yesterday at 7:30 PM",
+    imageUrl: "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
   }
 ];
 
@@ -172,14 +232,19 @@ const mockMarkets: Market[] = [
 interface GameContextType {
   markets: Market[];
   gameTypes: GameType[];
+  tossGames: TossGame[];
   userBets: Bet[];
   getMarketBySlug: (slug: string) => Market | undefined;
   getGameTypeById: (id: string) => GameType | undefined;
-  placeBet: (marketId: string, gameTypeId: string, amount: number, numbers: number[]) => Promise<boolean>;
+  getTossGameById: (id: string) => TossGame | undefined;
+  placeBet: (marketId: string, gameTypeId: string, amount: number, numbers: number[], selectedTeam?: string) => Promise<boolean>;
   updateMarketStatus: (marketId: string, status: GameStatus) => Promise<boolean>;
+  updateTossGameStatus: (gameId: string, status: GameStatus) => Promise<boolean>;
   declareResult: (marketId: string, results: Record<string, string>) => Promise<boolean>;
+  declareTossResult: (gameId: string, winningTeam: string) => Promise<boolean>;
   createMarket: (market: Omit<Market, "id" | "games" | "previousResults">, gameTypeIds: string[]) => Promise<boolean>;
   createGameType: (gameType: Omit<GameType, "id">) => Promise<boolean>;
+  createTossGame: (game: Omit<TossGame, "id">) => Promise<boolean>;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -195,6 +260,7 @@ export const useGame = () => {
 export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [markets, setMarkets] = useState<Market[]>(mockMarkets);
   const [gameTypes, setGameTypes] = useState<GameType[]>(mockGameTypes);
+  const [tossGames, setTossGames] = useState<TossGame[]>(mockTossGames);
   const [userBets, setUserBets] = useState<Bet[]>([]);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -207,7 +273,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return gameTypes.find(gameType => gameType.id === id);
   };
 
-  const placeBet = async (marketId: string, gameTypeId: string, amount: number, numbers: number[]): Promise<boolean> => {
+  const getTossGameById = (id: string) => {
+    return tossGames.find(game => game.id === id);
+  };
+
+  const placeBet = async (
+    marketId: string, 
+    gameTypeId: string, 
+    amount: number, 
+    numbers: number[],
+    selectedTeam?: string
+  ): Promise<boolean> => {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -221,30 +297,31 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      const market = markets.find(m => m.id === marketId);
-      if (!market) {
-        toast({
-          title: "Market not found",
-          description: "The selected market does not exist",
-          variant: "destructive"
-        });
-        return false;
-      }
-
-      if (market.status !== "open") {
-        toast({
-          title: "Market closed",
-          description: "This market is not open for betting",
-          variant: "destructive"
-        });
-        return false;
-      }
-
       const gameType = getGameTypeById(gameTypeId);
       if (!gameType) {
         toast({
           title: "Game type not found",
           description: "The selected game type does not exist",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // For toss games, validate the selected team
+      if (gameType.category === "toss" && !selectedTeam) {
+        toast({
+          title: "Team selection required",
+          description: "Please select a team for your bet",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      // For number games, validate the numbers
+      if (gameType.category === "number" && numbers.length === 0) {
+        toast({
+          title: "Number selection required",
+          description: "Please select at least one number",
           variant: "destructive"
         });
         return false;
@@ -270,13 +347,48 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      if (numbers.length === 0) {
-        toast({
-          title: "Selection required",
-          description: "Please select at least one number",
-          variant: "destructive"
-        });
-        return false;
+      // Check if market is open for a number game
+      if (gameType.category === "number") {
+        const market = markets.find(m => m.id === marketId);
+        if (!market) {
+          toast({
+            title: "Market not found",
+            description: "The selected market does not exist",
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        if (market.status !== "open") {
+          toast({
+            title: "Market closed",
+            description: "This market is not open for betting",
+            variant: "destructive"
+          });
+          return false;
+        }
+      }
+
+      // Check if toss game is open for a toss game
+      if (gameType.category === "toss") {
+        const tossGame = tossGames.find(g => g.id === marketId);
+        if (!tossGame) {
+          toast({
+            title: "Game not found",
+            description: "The selected toss game does not exist",
+            variant: "destructive"
+          });
+          return false;
+        }
+
+        if (tossGame.status !== "open") {
+          toast({
+            title: "Game closed",
+            description: "This toss game is not open for betting",
+            variant: "destructive"
+          });
+          return false;
+        }
       }
 
       // Create new bet
@@ -287,6 +399,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         gameTypeId,
         amount,
         numbers,
+        selectedTeam,
         status: "pending",
         createdAt: new Date().toISOString()
       };
@@ -295,7 +408,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       toast({
         title: "Bet placed successfully!",
-        description: `Placed ₹${amount} on ${gameType.name} in ${market.name}`,
+        description: `Placed ₹${amount} on ${gameType.name}`,
       });
 
       return true;
@@ -403,9 +516,77 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateTossGameStatus = async (gameId: string, status: GameStatus): Promise<boolean> => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setTossGames(prevGames => 
+        prevGames.map(game => 
+          game.id === gameId ? { ...game, status } : game
+        )
+      );
+
+      toast({
+        title: "Game status updated",
+        description: `The toss game status has been changed to ${status}`,
+      });
+
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error updating game",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
+  const declareTossResult = async (gameId: string, winningTeam: string): Promise<boolean> => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update game status
+      setTossGames(prevGames => 
+        prevGames.map(game => 
+          game.id === gameId ? { ...game, status: "closed" } : game
+        )
+      );
+
+      // Update bet statuses
+      setUserBets(prevBets => 
+        prevBets.map(bet => {
+          if (bet.marketId === gameId && bet.status === "pending" && bet.selectedTeam) {
+            return {
+              ...bet,
+              status: bet.selectedTeam === winningTeam ? "won" : "lost"
+            };
+          }
+          return bet;
+        })
+      );
+
+      toast({
+        title: "Toss result declared",
+        description: `${winningTeam} has won the toss`,
+      });
+
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error declaring result",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   const createMarket = async (
     market: Omit<Market, "id" | "games" | "previousResults">, 
-    gameTypeIds: string[]
+    gameTypeIds: string
   ): Promise<boolean> => {
     try {
       // Simulate API call
@@ -482,18 +663,52 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const createTossGame = async (game: Omit<TossGame, "id">): Promise<boolean> => {
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create new toss game
+      const newGame: TossGame = {
+        id: `toss_${Date.now()}`,
+        ...game
+      };
+
+      setTossGames(prevGames => [...prevGames, newGame]);
+
+      toast({
+        title: "Toss game created",
+        description: `${game.title} has been created successfully`,
+      });
+
+      return true;
+    } catch (error) {
+      toast({
+        title: "Error creating toss game",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+
   return (
     <GameContext.Provider value={{
       markets,
       gameTypes,
+      tossGames,
       userBets,
       getMarketBySlug,
       getGameTypeById,
+      getTossGameById,
       placeBet,
       updateMarketStatus,
+      updateTossGameStatus,
       declareResult,
+      declareTossResult,
       createMarket,
-      createGameType
+      createGameType,
+      createTossGame
     }}>
       {children}
     </GameContext.Provider>
