@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminGames from "./pages/AdminGames";
 import GameListing from "./pages/GameListing";
+import Markets from "./pages/Markets";
 import GameDetail from "./pages/GameDetail";
 import Wallet from "./pages/Wallet";
 import UserProfile from "./pages/UserProfile";
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="/admin/games" element={<AdminGames />} />
               <Route path="/admin/transactions" element={<Transactions />} />
               <Route path="/games" element={<GameListing />} />
+              <Route path="/markets" element={<Markets />} />
               <Route path="/games/:slug" element={<GameDetail />} />
               <Route path="/toss-games" element={<TossGames />} />
               <Route path="/toss-games/:id" element={<TossGameDetail />} />

@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Filter, Search } from "lucide-react";
+import { ArrowLeft, Filter, Search, Dices, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +13,7 @@ const GameListing = () => {
   const { markets, tossGames } = useGame();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<GameStatus | "all">("all");
+  const [gameType, setGameType] = useState<"all" | "markets" | "toss">("all");
   
   // Filter markets based on search term and status
   const filteredMarkets = markets.filter(market => {
@@ -21,6 +21,10 @@ const GameListing = () => {
     const matchesStatus = statusFilter === "all" || market.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Only show what's selected
+  const showMarkets = gameType === "all" || gameType === "markets";
+  const showTossGames = gameType === "all" || gameType === "toss";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-queen-dark to-queen-dark/95 py-10 px-4 md:px-8">
@@ -37,17 +41,31 @@ const GameListing = () => {
           <p className="text-queen-text-secondary">Browse and participate in various games and markets</p>
         </div>
 
-        {/* Show toss games at the top */}
-        {tossGames.length > 0 && (
-          <TossGameListing tossGames={tossGames} />
-        )}
+        {/* Game type selector */}
+        <div className="mb-8">
+          <Tabs defaultValue="all" onValueChange={(value) => setGameType(value as "all" | "markets" | "toss")}>
+            <TabsList className="bg-white/5 border border-white/10">
+              <TabsTrigger value="all" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                All Games
+              </TabsTrigger>
+              <TabsTrigger value="markets" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                <LayoutGrid className="h-4 w-4 mr-2" />
+                Number Games
+              </TabsTrigger>
+              <TabsTrigger value="toss" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                <Dices className="h-4 w-4 mr-2" />
+                Toss Games
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="md:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-queen-text-secondary" />
               <Input 
-                placeholder="Search markets..." 
+                placeholder="Search games..." 
                 className="pl-10 bg-white/5 border-white/10 text-white"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -60,124 +78,156 @@ const GameListing = () => {
               className="w-full border-white/10 text-white hover:bg-white/10 hover:text-white flex items-center justify-center"
             >
               <Filter className="h-4 w-4 mr-2" />
-              Filter Markets
+              Filter Games
             </Button>
           </div>
         </div>
         
-        <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Number Games</h2>
-          <p className="text-queen-text-secondary">Browse markets and place bets on number games</p>
-        </div>
+        {/* Toss Games Section */}
+        {showTossGames && tossGames.length > 0 && (
+          <div className="mb-10">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Toss Games</h2>
+                <p className="text-queen-text-secondary">Predict match toss outcomes and win</p>
+              </div>
+              <Link 
+                to="/toss-games" 
+                className="text-queen-gold hover:text-queen-gold/80 transition-colors flex items-center"
+              >
+                View All <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
+              </Link>
+            </div>
+            <TossGameListing tossGames={tossGames} />
+          </div>
+        )}
         
-        <Tabs defaultValue="all" className="mb-8" onValueChange={(value) => setStatusFilter(value as GameStatus | "all")}>
-          <TabsList className="bg-white/5 border border-white/10 mb-6">
-            <TabsTrigger value="all" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
-              All Markets
-            </TabsTrigger>
-            <TabsTrigger value="open" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
-              Open
-            </TabsTrigger>
-            <TabsTrigger value="upcoming" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
-              Upcoming
-            </TabsTrigger>
-            <TabsTrigger value="closed" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
-              Closed
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMarkets.map((market) => (
-                <CardMarket
-                  key={market.id}
-                  title={market.name}
-                  type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
-                  slug={market.slug}
-                  status={market.status}
-                  timeRemaining={market.timeRemaining}
-                  imageUrl={market.imageUrl}
-                  gameCount={market.games.length}
-                />
-              ))}
+        {/* Markets Section */}
+        {showMarkets && (
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Number Games</h2>
+                <p className="text-queen-text-secondary">Browse markets and place bets on number games</p>
+              </div>
+              <Link 
+                to="/markets" 
+                className="text-queen-gold hover:text-queen-gold/80 transition-colors flex items-center"
+              >
+                View All <ArrowLeft className="h-4 w-4 ml-1 rotate-180" />
+              </Link>
+            </div>
+            
+            <Tabs defaultValue="all" className="mb-8" onValueChange={(value) => setStatusFilter(value as GameStatus | "all")}>
+              <TabsList className="bg-white/5 border border-white/10 mb-6">
+                <TabsTrigger value="all" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                  All Markets
+                </TabsTrigger>
+                <TabsTrigger value="open" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                  Open
+                </TabsTrigger>
+                <TabsTrigger value="upcoming" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                  Upcoming
+                </TabsTrigger>
+                <TabsTrigger value="closed" className="data-[state=active]:bg-queen-gold data-[state=active]:text-queen-dark">
+                  Closed
+                </TabsTrigger>
+              </TabsList>
               
-              {filteredMarkets.length === 0 && (
-                <div className="col-span-full py-12 text-center">
-                  <p className="text-queen-text-secondary text-lg">No markets found.</p>
+              <TabsContent value="all" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMarkets.map((market) => (
+                    <CardMarket
+                      key={market.id}
+                      title={market.name}
+                      type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
+                      slug={market.slug}
+                      status={market.status}
+                      timeRemaining={market.timeRemaining}
+                      imageUrl={market.imageUrl}
+                      gameCount={market.games.length}
+                    />
+                  ))}
+                  
+                  {filteredMarkets.length === 0 && (
+                    <div className="col-span-full py-12 text-center">
+                      <p className="text-queen-text-secondary text-lg">No markets found.</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="open" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMarkets.length > 0 ? 
-                filteredMarkets.map((market) => (
-                  <CardMarket
-                    key={market.id}
-                    title={market.name}
-                    type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
-                    slug={market.slug}
-                    status={market.status}
-                    timeRemaining={market.timeRemaining}
-                    imageUrl={market.imageUrl}
-                    gameCount={market.games.length}
-                  />
-                )) : (
-                  <div className="col-span-full py-12 text-center">
-                    <p className="text-queen-text-secondary text-lg">No open markets found.</p>
-                  </div>
-                )
-              }
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="upcoming" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMarkets.length > 0 ? 
-                filteredMarkets.map((market) => (
-                  <CardMarket
-                    key={market.id}
-                    title={market.name}
-                    type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
-                    slug={market.slug}
-                    status={market.status}
-                    timeRemaining={market.timeRemaining}
-                    imageUrl={market.imageUrl}
-                    gameCount={market.games.length}
-                  />
-                )) : (
-                  <div className="col-span-full py-12 text-center">
-                    <p className="text-queen-text-secondary text-lg">No upcoming markets found.</p>
-                  </div>
-                )
-              }
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="closed" className="mt-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredMarkets.length > 0 ? 
-                filteredMarkets.map((market) => (
-                  <CardMarket
-                    key={market.id}
-                    title={market.name}
-                    type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
-                    slug={market.slug}
-                    status={market.status}
-                    timeRemaining={market.timeRemaining}
-                    imageUrl={market.imageUrl}
-                    gameCount={market.games.length}
-                  />
-                )) : (
-                  <div className="col-span-full py-12 text-center">
-                    <p className="text-queen-text-secondary text-lg">No closed markets found.</p>
-                  </div>
-                )
-              }
-            </div>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+              
+              <TabsContent value="open" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMarkets.length > 0 ? 
+                    filteredMarkets.map((market) => (
+                      <CardMarket
+                        key={market.id}
+                        title={market.name}
+                        type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
+                        slug={market.slug}
+                        status={market.status}
+                        timeRemaining={market.timeRemaining}
+                        imageUrl={market.imageUrl}
+                        gameCount={market.games.length}
+                      />
+                    )) : (
+                      <div className="col-span-full py-12 text-center">
+                        <p className="text-queen-text-secondary text-lg">No open markets found.</p>
+                      </div>
+                    )
+                  }
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="upcoming" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMarkets.length > 0 ? 
+                    filteredMarkets.map((market) => (
+                      <CardMarket
+                        key={market.id}
+                        title={market.name}
+                        type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
+                        slug={market.slug}
+                        status={market.status}
+                        timeRemaining={market.timeRemaining}
+                        imageUrl={market.imageUrl}
+                        gameCount={market.games.length}
+                      />
+                    )) : (
+                      <div className="col-span-full py-12 text-center">
+                        <p className="text-queen-text-secondary text-lg">No upcoming markets found.</p>
+                      </div>
+                    )
+                  }
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="closed" className="mt-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredMarkets.length > 0 ? 
+                    filteredMarkets.map((market) => (
+                      <CardMarket
+                        key={market.id}
+                        title={market.name}
+                        type={`${market.games.length} Game${market.games.length !== 1 ? 's' : ''}`}
+                        slug={market.slug}
+                        status={market.status}
+                        timeRemaining={market.timeRemaining}
+                        imageUrl={market.imageUrl}
+                        gameCount={market.games.length}
+                      />
+                    )) : (
+                      <div className="col-span-full py-12 text-center">
+                        <p className="text-queen-text-secondary text-lg">No closed markets found.</p>
+                      </div>
+                    )
+                  }
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
       </div>
     </div>
   );
