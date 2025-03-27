@@ -11,10 +11,12 @@ import {
   Menu, 
   X,
   ChevronDown,
-  Trophy
+  Trophy,
+  BarChart3
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { 
   SidebarProvider, 
   Sidebar, 
@@ -35,6 +37,7 @@ const Dashboard = () => {
   const [username, setUsername] = useState("JohnPlayer");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   const handleLogout = () => {
     // In a real app, connect to Supabase here for logout
@@ -62,7 +65,7 @@ const Dashboard = () => {
   }, [isMobileSidebarOpen]);
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex bg-queen-dark">
         {/* Desktop Sidebar using Shadcn Sidebar component */}
         <Sidebar variant="sidebar" collapsible="icon">
@@ -165,7 +168,7 @@ const Dashboard = () => {
                   </div>
                   <span className="text-xl font-bold">Queen Games</span>
                 </Link>
-                <button onClick={toggleMobileSidebar}>
+                <button onClick={toggleMobileSidebar} className="p-1 rounded-full hover:bg-white/5">
                   <X className="h-6 w-6" />
                 </button>
               </div>
@@ -241,7 +244,7 @@ const Dashboard = () => {
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-queen-gold flex items-center justify-center text-black font-bold">
                       {username.charAt(0).toUpperCase()}
                     </div>
-                    <div className="hidden md:flex flex-col">
+                    <div className="hidden sm:flex flex-col">
                       <span className="text-sm font-medium">{username}</span>
                       <span className="text-xs text-queen-text-secondary">Player</span>
                     </div>
@@ -253,41 +256,83 @@ const Dashboard = () => {
           </header>
           
           {/* Page content */}
-          <div className="container mx-auto p-4 md:p-6">
+          <div className="container mx-auto px-4 py-6">
             <div className="grid gap-6">
               <div>
                 <h1 className="text-2xl font-bold mb-1">Dashboard</h1>
                 <p className="text-queen-text-secondary">Welcome back, {username}!</p>
               </div>
               
+              {/* Balance Card - Mobile Only */}
+              <div className="md:hidden bg-queen-card/30 border border-white/10 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-queen-text-secondary text-sm">Total Balance</div>
+                    <div className="text-2xl font-bold text-queen-gold mt-1">{balance}</div>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-queen-gold/10 flex items-center justify-center">
+                    <Wallet className="h-5 w-5 text-queen-gold" />
+                  </div>
+                </div>
+              </div>
+              
               {/* Quick Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4">
-                  <div className="text-queen-text-secondary text-sm">Total Balance</div>
-                  <div className="text-2xl font-bold text-queen-gold mt-1">{balance}</div>
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4 transition-all duration-300 hover:border-queen-gold/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-queen-text-secondary text-sm">Total Balance</div>
+                      <div className="text-2xl font-bold text-queen-gold mt-1">{balance}</div>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-queen-gold/10 flex items-center justify-center">
+                      <Wallet className="h-5 w-5 text-queen-gold" />
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4">
-                  <div className="text-queen-text-secondary text-sm">Active Bets</div>
-                  <div className="text-2xl font-bold text-white mt-1">3</div>
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4 transition-all duration-300 hover:border-blue-500/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-queen-text-secondary text-sm">Active Bets</div>
+                      <div className="text-2xl font-bold text-white mt-1">3</div>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                      <Gamepad2 className="h-5 w-5 text-blue-500" />
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4">
-                  <div className="text-queen-text-secondary text-sm">Total Won</div>
-                  <div className="text-2xl font-bold text-green-500 mt-1">₹25,000.00</div>
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4 transition-all duration-300 hover:border-green-500/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-queen-text-secondary text-sm">Total Won</div>
+                      <div className="text-2xl font-bold text-green-500 mt-1">₹25,000.00</div>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                      <Trophy className="h-5 w-5 text-green-500" />
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4">
-                  <div className="text-queen-text-secondary text-sm">Win Rate</div>
-                  <div className="text-2xl font-bold text-white mt-1">67%</div>
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg p-4 transition-all duration-300 hover:border-purple-500/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-queen-text-secondary text-sm">Win Rate</div>
+                      <div className="text-2xl font-bold text-white mt-1">67%</div>
+                    </div>
+                    <div className="h-10 w-10 rounded-full bg-purple-500/10 flex items-center justify-center">
+                      <BarChart3 className="h-5 w-5 text-purple-500" />
+                    </div>
+                  </div>
                 </div>
               </div>
               
               {/* Recent Games & Transactions */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg overflow-hidden">
-                  <div className="p-4 border-b border-white/10">
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg overflow-hidden transition-all duration-300 hover:border-white/20">
+                  <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-lg font-medium">Recent Games</h2>
+                    <Link to="/game-results" className="text-sm text-queen-gold hover:underline">View all</Link>
                   </div>
                   <div className="divide-y divide-white/5">
                     {Array.from({ length: 4 }).map((_, index) => (
@@ -313,9 +358,10 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <div className="bg-queen-card/30 border border-white/10 rounded-lg overflow-hidden">
-                  <div className="p-4 border-b border-white/10">
+                <div className="bg-queen-card/30 border border-white/10 rounded-lg overflow-hidden transition-all duration-300 hover:border-white/20">
+                  <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h2 className="text-lg font-medium">Recent Transactions</h2>
+                    <Link to="/wallet" className="text-sm text-queen-gold hover:underline">View all</Link>
                   </div>
                   <div className="divide-y divide-white/5">
                     {Array.from({ length: 4 }).map((_, index) => (
