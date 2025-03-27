@@ -53,8 +53,8 @@ const SignIn = () => {
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-queen-dark to-queen-dark/90">
       <Header />
       
-      {/* Main content with padding-top to account for fixed header */}
-      <main className="flex-grow flex items-center justify-center pt-24 px-4">
+      {/* Main content with padding to account for fixed header and footer spacing */}
+      <main className="flex-grow flex items-center justify-center pt-24 pb-16 px-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
