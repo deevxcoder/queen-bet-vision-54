@@ -1,7 +1,7 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarTrigger, SidebarInset, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from "@/components/ui/sidebar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Users, GraduationCap, CreditCard, Settings, LogOut, Search, Filter, CheckCircle, XCircle, Edit, Trash2, Shield } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,72 +10,161 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-
-// Mock users data
-const mockUsers = [
-  {
-    id: "user1",
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+91 9876543210",
-    role: "user",
-    status: "active",
-    balance: 5000,
-    createdAt: "2023-03-15T00:00:00Z"
-  },
-  {
-    id: "user2",
-    name: "Emma Wilson",
-    email: "emma@example.com",
-    phone: "+91 9876543211",
-    role: "user",
-    status: "active",
-    balance: 7500,
-    createdAt: "2023-04-20T00:00:00Z"
-  },
-  {
-    id: "user3",
-    name: "Michael Brown",
-    email: "michael@example.com",
-    phone: "+91 9876543212",
-    role: "user",
-    status: "inactive",
-    balance: 0,
-    createdAt: "2023-05-10T00:00:00Z"
-  },
-  {
-    id: "user4",
-    name: "Sarah Johnson",
-    email: "sarah@example.com",
-    phone: "+91 9876543213",
-    role: "user",
-    status: "active",
-    balance: 12000,
-    createdAt: "2023-06-05T00:00:00Z"
-  },
-  {
-    id: "user5",
-    name: "Admin User",
-    email: "admin@example.com",
-    phone: "+91 9876543214",
-    role: "admin",
-    status: "active",
-    balance: 0,
-    createdAt: "2023-01-01T00:00:00Z"
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { UserRole } from "@/contexts/AuthContext";
 
 type UserStatus = "active" | "inactive";
 type FilterStatus = "all" | UserStatus;
 
+interface ProfileUser {
+  id: string;
+  name: string | null;
+  email: string;
+  phone: string | null;
+  role: UserRole;
+  status?: UserStatus;
+  balance: number;
+  created_at: string;
+}
+
 const AdminUsers = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterStatus>("all");
-  const [users, setUsers] = useState(mockUsers);
-  const [selectedUser, setSelectedUser] = useState<(typeof users)[0] | null>(null);
+  const [users, setUsers] = useState<ProfileUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<ProfileUser | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editRole, setEditRole] = useState<UserRole>("user");
+  
+  useEffect(() => {
+    if (user && user.role !== "admin") {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (data) {
+          // Add a default status property to each user
+          const usersWithStatus = data.map(user => ({
+            ...user,
+            status: "active" as UserStatus
+          }));
+          setUsers(usersWithStatus);
+        }
+      } catch (error: any) {
+        toast({
+          title: "Error Loading Users",
+          description: error.message || "Could not load users. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (user && user.role === "admin") {
+      fetchUsers();
+    }
+  }, [user, toast]);
+  
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || '') || 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.phone?.includes(searchTerm) || '');
+    
+    if (statusFilter === "all") return matchesSearch;
+    return matchesSearch && user.status === statusFilter;
+  });
+  
+  const handleStatusChange = async (userId: string, newStatus: UserStatus) => {
+    // In a real application, you might want to store the user's status in the database
+    // For now, we'll just update the local state
+    setUsers(users.map(user => 
+      user.id === userId ? { ...user, status: newStatus } : user
+    ));
+    
+    toast({
+      title: `User ${newStatus === "active" ? "Activated" : "Deactivated"}`,
+      description: `User has been ${newStatus === "active" ? "activated" : "deactivated"} successfully.`,
+    });
+  };
+  
+  const handleRoleChange = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: editRole })
+        .eq('id', selectedUser.id);
+      
+      if (error) throw error;
+      
+      setUsers(users.map(user => 
+        user.id === selectedUser.id ? { ...user, role: editRole } : user
+      ));
+      
+      setShowEditDialog(false);
+      
+      toast({
+        title: "Role Updated",
+        description: `User's role has been updated to ${editRole}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Role Update Failed",
+        description: error.message || "Could not update user role. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      // Note: In a real application, you might want to implement a soft delete instead
+      // or handle user deletion through Supabase Auth
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', selectedUser.id);
+      
+      if (error) throw error;
+      
+      setUsers(users.filter(user => user.id !== selectedUser.id));
+      setShowDeleteDialog(false);
+      
+      toast({
+        title: "User Deleted",
+        description: "User has been deleted successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Delete Failed",
+        description: error.message || "Could not delete user. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   if (!user || user.role !== "admin") {
     return (
@@ -94,39 +183,6 @@ const AdminUsers = () => {
       </div>
     );
   }
-  
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone.includes(searchTerm);
-    
-    if (statusFilter === "all") return matchesSearch;
-    return matchesSearch && user.status === statusFilter;
-  });
-  
-  const handleStatusChange = (userId: string, newStatus: UserStatus) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, status: newStatus } : user
-    ));
-    
-    toast({
-      title: `User ${newStatus === "active" ? "Activated" : "Deactivated"}`,
-      description: `User has been ${newStatus === "active" ? "activated" : "deactivated"} successfully.`,
-    });
-  };
-  
-  const handleDeleteUser = () => {
-    if (!selectedUser) return;
-    
-    setUsers(users.filter(user => user.id !== selectedUser.id));
-    setShowDeleteDialog(false);
-    
-    toast({
-      title: "User Deleted",
-      description: "User has been deleted successfully.",
-    });
-  };
   
   return (
     <SidebarProvider>
@@ -273,7 +329,7 @@ const AdminUsers = () => {
               <div>
                 <CardTitle>Users</CardTitle>
                 <CardDescription className="text-white/70">
-                  {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'} found
+                  {isLoading ? "Loading users..." : `${filteredUsers.length} ${filteredUsers.length === 1 ? 'user' : 'users'} found`}
                 </CardDescription>
               </div>
               <Button className="bg-queen-gold text-queen-dark hover:bg-queen-gold/90">
@@ -282,110 +338,123 @@ const AdminUsers = () => {
               </Button>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-white/10 hover:bg-white/5">
-                    <TableHead className="text-white/70">User</TableHead>
-                    <TableHead className="text-white/70">Role</TableHead>
-                    <TableHead className="text-white/70">Status</TableHead>
-                    <TableHead className="text-white/70">Balance</TableHead>
-                    <TableHead className="text-white/70">Joined</TableHead>
-                    <TableHead className="text-white/70">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
-                    <TableRow className="border-white/10">
-                      <TableCell colSpan={6} className="text-center py-8 text-queen-text-secondary">
-                        No users found matching the current filters.
-                      </TableCell>
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-queen-text-secondary">Loading users...</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-white/10 hover:bg-white/5">
+                      <TableHead className="text-white/70">User</TableHead>
+                      <TableHead className="text-white/70">Role</TableHead>
+                      <TableHead className="text-white/70">Status</TableHead>
+                      <TableHead className="text-white/70">Balance</TableHead>
+                      <TableHead className="text-white/70">Joined</TableHead>
+                      <TableHead className="text-white/70">Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
-                              <span className="font-bold text-queen-gold">{user.name.charAt(0)}</span>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.length === 0 ? (
+                      <TableRow className="border-white/10">
+                        <TableCell colSpan={6} className="text-center py-8 text-queen-text-secondary">
+                          No users found matching the current filters.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
+                                <span className="font-bold text-queen-gold">{user.name ? user.name.charAt(0) : 'U'}</span>
+                              </div>
+                              <div>
+                                <div className="font-medium text-white">{user.name || 'No Name'}</div>
+                                <div className="text-sm text-queen-text-secondary">{user.email}</div>
+                              </div>
                             </div>
-                            <div>
-                              <div className="font-medium text-white">{user.name}</div>
-                              <div className="text-sm text-queen-text-secondary">{user.email}</div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`
-                            px-2 py-1 rounded-full text-xs font-medium
-                            ${user.role === 'admin' ? 'bg-queen-gold/20 text-queen-gold' : 'bg-blue-400/20 text-blue-400'}
-                          `}>
-                            {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`
-                            px-2 py-1 rounded-full text-xs font-medium
-                            ${user.status === 'active' ? 'bg-queen-success/20 text-queen-success' : 'bg-queen-error/20 text-queen-error'}
-                          `}>
-                            {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          ₹{user.balance.toLocaleString()}
-                        </TableCell>
-                        <TableCell className="text-queen-text-secondary">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-white hover:bg-white/10 hover:text-white"
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            {user.status === "active" ? (
+                          </TableCell>
+                          <TableCell>
+                            <span className={`
+                              px-2 py-1 rounded-full text-xs font-medium
+                              ${user.role === 'admin' ? 'bg-queen-gold/20 text-queen-gold' : 
+                                user.role === 'subadmin' ? 'bg-blue-400/20 text-blue-400' : 
+                                'bg-blue-400/20 text-blue-400'}
+                            `}>
+                              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <span className={`
+                              px-2 py-1 rounded-full text-xs font-medium
+                              ${user.status === 'active' ? 'bg-queen-success/20 text-queen-success' : 'bg-queen-error/20 text-queen-error'}
+                            `}>
+                              {user.status?.charAt(0).toUpperCase() + user.status?.slice(1)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            ₹{user.balance.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-queen-text-secondary">
+                            {new Date(user.created_at).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-white hover:bg-white/10 hover:text-white"
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setEditRole(user.role);
+                                  setShowEditDialog(true);
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              {user.status === "active" ? (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-queen-error hover:bg-queen-error/10 hover:text-queen-error"
+                                  onClick={() => handleStatusChange(user.id, "inactive")}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                  <span className="sr-only">Deactivate</span>
+                                </Button>
+                              ) : (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-queen-success hover:bg-queen-success/10 hover:text-queen-success"
+                                  onClick={() => handleStatusChange(user.id, "active")}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                  <span className="sr-only">Activate</span>
+                                </Button>
+                              )}
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
                                 className="text-queen-error hover:bg-queen-error/10 hover:text-queen-error"
-                                onClick={() => handleStatusChange(user.id, "inactive")}
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowDeleteDialog(true);
+                                }}
                               >
-                                <XCircle className="h-4 w-4" />
-                                <span className="sr-only">Deactivate</span>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete</span>
                               </Button>
-                            ) : (
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-queen-success hover:bg-queen-success/10 hover:text-queen-success"
-                                onClick={() => handleStatusChange(user.id, "active")}
-                              >
-                                <CheckCircle className="h-4 w-4" />
-                                <span className="sr-only">Activate</span>
-                              </Button>
-                            )}
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-queen-error hover:bg-queen-error/10 hover:text-queen-error"
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Delete</span>
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
 
@@ -411,6 +480,51 @@ const AdminUsers = () => {
                   onClick={handleDeleteUser}
                 >
                   Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit User Role Dialog */}
+          <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+            <DialogContent className="bg-white/5 border-white/10 text-white">
+              <DialogHeader>
+                <DialogTitle>Edit User Role</DialogTitle>
+                <DialogDescription className="text-white/70">
+                  Change the role for user "{selectedUser?.name}".
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <Label htmlFor="role" className="text-white mb-2 block">
+                  Role
+                </Label>
+                <Select 
+                  value={editRole} 
+                  onValueChange={(value) => setEditRole(value as UserRole)}
+                >
+                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white/10 border-white/10 text-white">
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="subadmin">Subadmin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  className="border-white/10 text-white hover:bg-white/10 hover:text-white"
+                  onClick={() => setShowEditDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-queen-gold text-queen-dark hover:bg-queen-gold/90"
+                  onClick={handleRoleChange}
+                >
+                  Save Changes
                 </Button>
               </DialogFooter>
             </DialogContent>

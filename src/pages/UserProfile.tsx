@@ -51,10 +51,6 @@ const UserProfile = () => {
   const onSubmit = async (data: ProfileFormValues) => {
     try {
       await updateUserProfile(data);
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been successfully updated.",
-      });
       setIsEditing(false);
     } catch (error) {
       toast({
