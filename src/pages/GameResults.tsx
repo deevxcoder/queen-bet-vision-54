@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useGame } from "@/contexts/GameContext";
 
 const GameResults = () => {
-  const { gameResults } = useGame();
+  const { userBets } = useGame();
   
   return (
     <DashboardLayout
