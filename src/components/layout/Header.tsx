@@ -1,279 +1,283 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Menu, X, ChevronDown, User, LogIn } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWallet } from "@/contexts/WalletContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const { isAuthenticated, user, signOut } = useAuth();
+  const { wallet } = useWallet();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 20) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleMenuToggle = () => {
-    setIsMenuOpen(!isMenuOpen);
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
   };
 
   return (
-    <header
-      className={`fixed w-full z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-queen-dark/90 backdrop-blur-md shadow-md py-4"
-          : "bg-transparent py-6"
-      }`}
-    >
-      <div className="container mx-auto px-4 lg:px-8">
+    <header className="py-4 px-4 sm:px-6 lg:px-8 border-b border-queen-dark-secondary">
+      <div className="container mx-auto">
         <div className="flex items-center justify-between">
-          <Link
-            to="/"
-            className="flex items-center space-x-2 text-2xl font-heading font-bold"
-          >
-            <span className="text-queen-gold">Queen</span>
-            <span className="text-white">Games</span>
+          <Link to="/" className="text-lg font-bold text-white">
+            Queen Games
           </Link>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
-            <NavLinks />
-          </nav>
-
-          {/* Desktop Auth Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
+          
+          <div className="hidden md:flex items-center space-x-6">
+            {/* Add Results link here */}
             <Link
-              to="/sign-in"
-              className="flex items-center text-queen-text-primary hover:text-queen-gold transition-colors px-3 py-2"
+              to="/results"
+              className="text-queen-text-secondary hover:text-white transition-colors"
             >
-              <LogIn className="mr-2 h-4 w-4" />
-              <span>Sign In</span>
+              Results
+            </Link>
+            
+            <Link
+              to="/games"
+              className="text-queen-text-secondary hover:text-white transition-colors"
+            >
+              Games
             </Link>
             <Link
-              to="/sign-up"
-              className="flex items-center bg-queen-gold text-queen-dark font-semibold px-4 py-2 rounded-lg hover:bg-queen-gold/90 transition-all"
+              to="/markets"
+              className="text-queen-text-secondary hover:text-white transition-colors"
             >
-              <User className="mr-2 h-4 w-4" />
-              <span>Sign Up</span>
+              Markets
             </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={handleMenuToggle}
-            className="lg:hidden text-queen-text-primary hover:text-queen-gold"
-            aria-label="Toggle Menu"
-          >
-            {isMenuOpen ? (
-              <X className="h-6 w-6 animate-fade-in" />
+            <Link
+              to="/toss-games"
+              className="text-queen-text-secondary hover:text-white transition-colors"
+            >
+              Toss Games
+            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/notifications"
+                  className="text-queen-text-secondary hover:text-white transition-colors"
+                >
+                  Notifications
+                </Link>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.image} />
+                        <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56 mr-2">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>
+                      <Link to="/profile" className="w-full h-full block">
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Link to="/wallet" className="w-full h-full block">
+                        Wallet ({wallet?.balance})
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Link to="/transactions" className="w-full h-full block">
+                        Transactions
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => signOut()}>Logout</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
             ) : (
-              <Menu className="h-6 w-6 animate-fade-in" />
+              <>
+                <Link
+                  to="/sign-in"
+                  className="text-queen-text-secondary hover:text-white transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/sign-up"
+                  className="text-white bg-queen-gold hover:bg-queen-gold/90 py-2 px-4 rounded-md transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
             )}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMenuOpen && (
-        <div className="lg:hidden absolute top-full left-0 w-full bg-queen-card border-t border-white/10 animate-fade-in">
-          <div className="container mx-auto px-4 py-4">
-            <nav className="flex flex-col space-y-4 mb-4">
-              <MobileNavLinks closeMenu={() => setIsMenuOpen(false)} />
-            </nav>
-            <div className="flex flex-col space-y-3 pt-4 border-t border-white/10">
+          </div>
+          
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-sm">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>
+                  Explore the app and manage your account.
+                </SheetDescription>
+              </SheetHeader>
+              <div className="flex flex-col space-y-2 mt-4">
+                <Link to="/" className="block py-2 text-sm font-medium hover:underline">
+                  Home
+                </Link>
+                <Link to="/games" className="block py-2 text-sm font-medium hover:underline">
+                  Games
+                </Link>
+                <Link to="/markets" className="block py-2 text-sm font-medium hover:underline">
+                  Markets
+                </Link>
+                <Link to="/toss-games" className="block py-2 text-sm font-medium hover:underline">
+                  Toss Games
+                </Link>
+                <Link
+                  to="/results"
+                  className="block py-2 text-sm font-medium hover:underline"
+                >
+                  Results
+                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <Link to="/profile" className="block py-2 text-sm font-medium hover:underline">
+                      Profile
+                    </Link>
+                    <Link to="/wallet" className="block py-2 text-sm font-medium hover:underline">
+                      Wallet
+                    </Link>
+                    <Link to="/notifications" className="block py-2 text-sm font-medium hover:underline">
+                      Notifications
+                    </Link>
+                    <Button variant="destructive" size="sm" className="w-full" onClick={() => signOut()}>
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link to="/sign-in" className="block py-2 text-sm font-medium hover:underline">
+                      Sign In
+                    </Link>
+                    <Link to="/sign-up" className="block py-2 text-sm font-medium hover:underline">
+                      Sign Up
+                    </Link>
+                  </>
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+          
+          {/* Make sure to add Results to mobile menu as well */}
+          <div
+            className={`fixed inset-0 z-50 bg-black/90 transform ${
+              mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+            } transition-transform duration-300 md:hidden`}
+          >
+            <div className="flex items-center justify-between p-4">
+              <Link to="/" className="text-lg font-bold text-white">
+                Queen Games
+              </Link>
+              <Button variant="ghost" onClick={toggleMobileMenu}>
+                Close
+              </Button>
+            </div>
+            
+            <div className="flex flex-col space-y-4 p-6">
+              {/* Add Results link to mobile menu */}
               <Link
-                to="/sign-in"
-                className="flex items-center justify-center text-queen-text-primary hover:text-queen-gold transition-colors px-3 py-2"
-                onClick={() => setIsMenuOpen(false)}
+                to="/results"
+                className="text-white hover:text-queen-gold transition-colors py-2"
+                onClick={closeMobileMenu}
               >
-                <LogIn className="mr-2 h-4 w-4" />
-                <span>Sign In</span>
+                Results
+              </Link>
+              
+              <Link
+                to="/games"
+                className="text-white hover:text-queen-gold transition-colors py-2"
+                onClick={closeMobileMenu}
+              >
+                Games
               </Link>
               <Link
-                to="/sign-up"
-                className="flex items-center justify-center bg-queen-gold text-queen-dark font-semibold px-4 py-2 rounded-lg hover:bg-queen-gold/90 transition-all"
-                onClick={() => setIsMenuOpen(false)}
+                to="/markets"
+                className="text-white hover:text-queen-gold transition-colors py-2"
+                onClick={closeMobileMenu}
               >
-                <User className="mr-2 h-4 w-4" />
-                <span>Sign Up</span>
+                Markets
               </Link>
+              <Link
+                to="/toss-games"
+                className="text-white hover:text-queen-gold transition-colors py-2"
+                onClick={closeMobileMenu}
+              >
+                Toss Games
+              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link
+                    to="/profile"
+                    className="text-white hover:text-queen-gold transition-colors py-2"
+                    onClick={closeMobileMenu}
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    to="/wallet"
+                    className="text-white hover:text-queen-gold transition-colors py-2"
+                    onClick={closeMobileMenu}
+                  >
+                    Wallet
+                  </Link>
+                  <Link
+                    to="/notifications"
+                    className="text-white hover:text-queen-gold transition-colors py-2"
+                    onClick={closeMobileMenu}
+                  >
+                    Notifications
+                  </Link>
+                  <Button variant="destructive" size="sm" className="w-full" onClick={() => signOut()}>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/sign-in"
+                    className="text-white hover:text-queen-gold transition-colors py-2"
+                    onClick={closeMobileMenu}
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    to="/sign-up"
+                    className="text-white bg-queen-gold hover:bg-queen-gold/90 py-2 px-4 rounded-md transition-colors"
+                    onClick={closeMobileMenu}
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
-      )}
+      </div>
     </header>
-  );
-};
-
-const NavLinks = () => {
-  return (
-    <>
-      <Link
-        to="/"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors"
-      >
-        Home
-      </Link>
-      <DropdownLink
-        title="Games"
-        links={[
-          { to: "/games/number", label: "Number Games" },
-          { to: "/games/option", label: "Option Games" },
-          { to: "/games/jodi", label: "Jodi Games" },
-          { to: "/games/all", label: "All Games" },
-        ]}
-      />
-      <Link
-        to="/how-to-play"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors"
-      >
-        How to Play
-      </Link>
-      <Link
-        to="/results"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors"
-      >
-        Results
-      </Link>
-      <Link
-        to="/contact"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors"
-      >
-        Contact
-      </Link>
-    </>
-  );
-};
-
-const MobileNavLinks = ({ closeMenu }: { closeMenu: () => void }) => {
-  return (
-    <>
-      <Link
-        to="/"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors py-2"
-        onClick={closeMenu}
-      >
-        Home
-      </Link>
-      <MobileDropdownLink
-        title="Games"
-        links={[
-          { to: "/games/number", label: "Number Games" },
-          { to: "/games/option", label: "Option Games" },
-          { to: "/games/jodi", label: "Jodi Games" },
-          { to: "/games/all", label: "All Games" },
-        ]}
-        closeMenu={closeMenu}
-      />
-      <Link
-        to="/how-to-play"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors py-2"
-        onClick={closeMenu}
-      >
-        How to Play
-      </Link>
-      <Link
-        to="/results"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors py-2"
-        onClick={closeMenu}
-      >
-        Results
-      </Link>
-      <Link
-        to="/contact"
-        className="text-queen-text-primary hover:text-queen-gold transition-colors py-2"
-        onClick={closeMenu}
-      >
-        Contact
-      </Link>
-    </>
-  );
-};
-
-const DropdownLink = ({
-  title,
-  links,
-}: {
-  title: string;
-  links: { to: string; label: string }[];
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
-    >
-      <button className="flex items-center text-queen-text-primary hover:text-queen-gold transition-colors">
-        {title}
-        <ChevronDown className="ml-1 h-4 w-4" />
-      </button>
-      {isOpen && (
-        <div className="absolute left-0 mt-2 w-48 rounded-md overflow-hidden border border-white/10 bg-queen-card shadow-lg glass animate-fade-in">
-          <div className="py-1">
-            {links.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="block px-4 py-2 text-sm text-queen-text-primary hover:bg-queen-gold hover:text-queen-dark transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const MobileDropdownLink = ({
-  title,
-  links,
-  closeMenu,
-}: {
-  title: string;
-  links: { to: string; label: string }[];
-  closeMenu: () => void;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        className="flex items-center justify-between w-full text-queen-text-primary hover:text-queen-gold transition-colors py-2"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {title}
-        <ChevronDown
-          className={`ml-1 h-4 w-4 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </button>
-      {isOpen && (
-        <div className="pl-4 border-l border-white/10 mt-1 animate-fade-in">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="block py-2 text-queen-text-primary hover:text-queen-gold transition-colors"
-              onClick={closeMenu}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
   );
 };
 
