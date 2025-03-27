@@ -1,165 +1,200 @@
 
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { Eye, EyeOff, UserPlus, Lock } from "lucide-react";
-import Header from "../components/layout/Header";
-import Footer from "../components/layout/Footer";
-import { Input } from "@/components/ui/input";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 const SignUp = () => {
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate inputs
-    if (!username || !email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive"
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
       });
       return;
     }
-    
+
     if (password !== confirmPassword) {
       toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive"
+        title: "Password Mismatch",
+        description: "Passwords do not match. Please try again.",
+        variant: "destructive",
       });
       return;
     }
-    
+
+    if (!agreeTerms) {
+      toast({
+        title: "Terms Agreement Required",
+        description: "Please agree to the terms and conditions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
-    
     try {
-      // In a real implementation, connect to Supabase here
-      // For now, simulate registration
-      setTimeout(() => {
-        toast({
-          title: "Success",
-          description: "Account created successfully!",
-        });
-        navigate("/sign-in");
-        setIsLoading(false);
-      }, 1500);
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Account Created",
+        description: "Your account has been successfully created!",
+      });
+      navigate("/sign-in");
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create account. Please try again.",
-        variant: "destructive"
+        title: "Registration Failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-queen-dark">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-queen-dark to-queen-dark/90">
       <Header />
-      <main className="flex-grow flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-queen-card/30 p-6 rounded-xl border border-white/10 backdrop-blur-md">
-          <div className="text-center mb-6">
-            <UserPlus className="mx-auto h-12 w-12 text-queen-gold mb-2" />
-            <h1 className="text-2xl font-bold text-white">Create Account</h1>
-            <p className="text-queen-text-secondary mt-1">
-              Join Queen Games and start betting on your favorite games
+      
+      {/* Main content with padding-top to account for fixed header */}
+      <main className="flex-grow flex items-center justify-center pt-24 px-4 py-10">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-white mb-2">Create an Account</h1>
+            <p className="text-queen-text-secondary">
+              Join us to start playing and winning
             </p>
           </div>
-          
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="johnsmith"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="bg-white/5 border-white/10 text-white focus-visible:ring-queen-gold"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="bg-white/5 border-white/10 text-white focus-visible:ring-queen-gold"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-xl">
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-white">
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-white">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-white">
+                  Phone Number
+                </Label>
+                <Input
+                  id="phone"
+                  placeholder="+91 9876543210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-white">
+                  Password
+                </Label>
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white focus-visible:ring-queen-gold pr-10"
+                  className="bg-white/5 border-white/10 text-white"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-queen-text-secondary hover:text-white"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
               </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <div className="relative">
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-white">
+                  Confirm Password
+                </Label>
                 <Input
                   id="confirmPassword"
-                  type={showPassword ? "text" : "password"}
+                  type="password"
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white focus-visible:ring-queen-gold pr-10"
+                  className="bg-white/5 border-white/10 text-white"
                 />
               </div>
-            </div>
 
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full bg-queen-gold hover:bg-queen-gold/90 text-queen-dark font-semibold"
-            >
-              {isLoading ? "Creating Account..." : "Create Account"}
-            </Button>
-            
-            <div className="text-center mt-4">
-              <p className="text-queen-text-secondary">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="terms"
+                  checked={agreeTerms}
+                  onCheckedChange={(checked) => setAgreeTerms(!!checked)}
+                />
+                <Label
+                  htmlFor="terms"
+                  className="text-sm text-queen-text-secondary cursor-pointer"
+                >
+                  I agree to the{" "}
+                  <Link to="/terms" className="text-queen-gold hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link to="/privacy" className="text-queen-gold hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-queen-gold hover:bg-queen-gold/90 text-queen-dark font-semibold py-2 mt-2"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating Account..." : "Create Account"}
+              </Button>
+
+              <div className="mt-4 text-center text-queen-text-secondary">
                 Already have an account?{" "}
                 <Link to="/sign-in" className="text-queen-gold hover:underline">
-                  Sign In
+                  Sign in
                 </Link>
-              </p>
-            </div>
-          </form>
+              </div>
+            </form>
+          </div>
         </div>
       </main>
+
       <Footer />
     </div>
   );
