@@ -24,6 +24,8 @@ import Notifications from "./pages/Notifications";
 import Transactions from "./pages/Transactions";
 import TossGames from "./pages/TossGames";
 import TossGameDetail from "./pages/TossGameDetail";
+import AdminDepositRequests from "./pages/AdminDepositRequests";
+import AdminWithdrawalRequests from "./pages/AdminWithdrawalRequests";
 
 // Create a client
 const queryClient = new QueryClient();
@@ -46,6 +48,8 @@ const App = () => {
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/games" element={<AdminGames />} />
               <Route path="/admin/transactions" element={<Transactions />} />
+              <Route path="/admin/deposit-requests" element={<AdminDepositRequests />} />
+              <Route path="/admin/withdrawal-requests" element={<AdminWithdrawalRequests />} />
               <Route path="/games" element={<GameListing />} />
               <Route path="/markets" element={<Markets />} />
               <Route path="/games/:slug" element={<GameDetail />} />
